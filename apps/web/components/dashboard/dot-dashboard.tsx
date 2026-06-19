@@ -3,16 +3,12 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 import {
-  IconArrowsSort,
   IconCalendarDollar,
-  IconCash,
   IconCircleCheckFilled,
-  IconLayoutGrid,
+  IconClock,
   IconMoon,
   IconPigMoney,
   IconReceipt2,
-  IconSearch,
-  IconShoppingCart,
   IconSun,
   IconWallet,
 } from "@tabler/icons-react"
@@ -25,19 +21,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+} from "@workspace/ui/components/card"
 import { Donut, ChartLegend, CompareBars } from "@/components/dashboard/charts"
+import { ItemsTable } from "@/components/dashboard/items-table"
+import { OtherExpenses } from "@/components/dashboard/other-expenses"
 import {
   ITEMS,
   STATUS_META,
@@ -48,42 +35,16 @@ import {
   realOf,
   seedState,
   type DotState,
-  type Item,
-  type Status,
 } from "@/lib/dot-data"
 
-const C_TODAY = "#f59e0b"
-const C_JOURJ = "#8b5cf6"
-const C_DONE = "#22c55e"
+const C_PAID = "#22c55e"
+const C_CASH = "#f59e0b"
+const C_PENDING = "#8b5cf6"
 const C_ENGAGE = "#7c3aed"
-
-const STATUS_BADGE: Record<Status, string> = {
-  today:
-    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
-  jourj:
-    "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400",
-  done:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
-}
-
-type Filter = "all" | "today" | "jourj" | "bought" | "todo"
-type SortKey = "id" | "art" | "total" | "real" | "delta" | "status"
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "Tous" },
-  { key: "today", label: "🛒 Aujourd'hui" },
-  { key: "jourj", label: "⏳ Jour J" },
-  { key: "bought", label: "✅ Achetés" },
-  { key: "todo", label: "◻︎ Reste à acheter" },
-]
 
 export function DotDashboard() {
   const [state, setState] = React.useState<DotState>(seedState)
   const [ready, setReady] = React.useState(false)
-  const [filter, setFilter] = React.useState<Filter>("all")
-  const [query, setQuery] = React.useState("")
-  const [sortBy, setSortBy] = React.useState<SortKey>("id")
-  const [grouped, setGrouped] = React.useState(false)
 
   // load persisted state on mount
   React.useEffect(() => {
@@ -112,41 +73,27 @@ export function DotDashboard() {
   function toggle(id: number, value: boolean) {
     setState((s) => ({ ...s, checked: { ...s.checked, [id]: value } }))
   }
-  function setPrice(id: number, value: string) {
-    setState((s) => ({ ...s, prices: { ...s.prices, [id]: value } }))
+  function toggleAll(ids: number[], value: boolean) {
+    setState((s) => {
+      const checked = { ...s.checked }
+      for (const id of ids) checked[id] = value
+      return { ...s, checked }
+    })
+  }
+  function setPrice(id: number, raw: string) {
+    setState((s) => {
+      const prices = { ...s.prices }
+      const v = parseFloat(raw.replace(/\s/g, ""))
+      if (raw.trim() === "" || Number.isNaN(v)) delete prices[id]
+      else prices[id] = v
+      return { ...s, prices }
+    })
   }
   function reset() {
-    if (confirm("Réinitialiser tous les achats cochés et prix saisis ?")) {
+    if (confirm("Réinitialiser les achats cochés et les prix réels ?")) {
       setState(seedState())
     }
   }
-
-  const rows = React.useMemo(() => {
-    let r = ITEMS.filter((i) => {
-      if (filter === "bought") return isChecked(state, i.id)
-      if (filter === "todo") return !isChecked(state, i.id)
-      if (filter === "today" || filter === "jourj") return i.status === filter
-      return true
-    })
-    if (query.trim()) {
-      const q = query.toLowerCase()
-      r = r.filter((i) => i.art.toLowerCase().includes(q))
-    }
-    const delta = (i: Item) => {
-      const v = realOf(state, i.id)
-      return v != null ? i.total - v : -Infinity
-    }
-    const cmp: Record<SortKey, (a: Item, b: Item) => number> = {
-      id: (a, b) => a.id - b.id,
-      art: (a, b) => a.art.localeCompare(b.art, "fr"),
-      total: (a, b) => b.total - a.total,
-      real: (a, b) => (realOf(state, b.id) ?? 0) - (realOf(state, a.id) ?? 0),
-      delta: (a, b) => delta(b) - delta(a),
-      status: (a, b) =>
-        STATUS_META[a.status].rank - STATUS_META[b.status].rank || a.id - b.id,
-    }
-    return [...r].sort(cmp[sortBy])
-  }, [state, filter, query, sortBy])
 
   const compareRows = React.useMemo(() => {
     return ITEMS.filter((i) => isChecked(state, i.id) && realOf(state, i.id) != null)
@@ -200,10 +147,10 @@ export function DotDashboard() {
       valueClass: c.savings >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
     },
     {
-      label: "Reste aujourd'hui",
-      value: fmt(c.todoToday),
-      sub: "non-périssables",
-      Icon: IconShoppingCart,
+      label: "En attente",
+      value: fmt(c.pendingTotal),
+      sub: "à régler",
+      Icon: IconClock,
       tint: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
     },
     {
@@ -216,13 +163,10 @@ export function DotDashboard() {
   ]
 
   const statusSegments = [
-    { label: "🛒 Aujourd'hui", value: c.byStatus.today, color: C_TODAY },
-    { label: "⏳ Jour J", value: c.byStatus.jourj, color: C_JOURJ },
-    { label: "✅ Déjà acheté", value: c.byStatus.done, color: C_DONE },
+    { label: "Payé", value: c.byStatus.paid, color: C_PAID, Icon: STATUS_META.paid.Icon },
+    { label: "Cash", value: c.byStatus.cash, color: C_CASH, Icon: STATUS_META.cash.Icon },
+    { label: "En attente", value: c.byStatus.pending, color: C_PENDING, Icon: STATUS_META.pending.Icon },
   ]
-
-  const grandSub = rows.reduce((s, i) => s + i.total, 0)
-  const grandReal = rows.reduce((s, i) => s + (realOf(state, i.id) ?? 0), 0)
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -276,7 +220,7 @@ export function DotDashboard() {
             {compareRows.length ? (
               <CompareBars rows={compareRows} max={compareMax} />
             ) : (
-              <p className="text-muted-foreground text-xs">Aucun prix réel saisi.</p>
+              <p className="text-muted-foreground text-xs">Aucun prix réel.</p>
             )}
           </CardContent>
         </Card>
@@ -313,7 +257,7 @@ export function DotDashboard() {
             <div className="text-muted-foreground mt-1 mb-4 text-[0.6875rem]">
               {c.deltas.length
                 ? `sur ${c.deltas.length} articles · réel ${fmt(c.realBought)}`
-                : "Aucun prix réel saisi"}
+                : "Aucun prix réel"}
             </div>
             <div className="flex flex-col gap-2.5">
               {sortedDeltas.map(({ item, delta }) => {
@@ -346,123 +290,15 @@ export function DotDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Articles</CardTitle>
-            <CardDescription>{rows.length} articles affichés</CardDescription>
+            <CardDescription>Cochez, filtrez, triez — éditez le prix réel par ligne</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Toolbar */}
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[180px] flex-1">
-                <IconSearch className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher un article…"
-                  className="pl-7"
-                />
-              </div>
-              <div className="relative">
-                <IconArrowsSort className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortKey)}
-                  className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/30 h-7 rounded-md border pr-2 pl-7 text-xs outline-none focus-visible:ring-2"
-                >
-                  <option value="id">Ordre</option>
-                  <option value="art">Nom (A→Z)</option>
-                  <option value="total">Budget ↓</option>
-                  <option value="real">Prix réel ↓</option>
-                  <option value="delta">Écart ↓</option>
-                  <option value="status">Statut</option>
-                </select>
-              </div>
-              <Button
-                variant={grouped ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setGrouped((g) => !g)}
-              >
-                <IconLayoutGrid /> Grouper
-              </Button>
-            </div>
-
-            {/* Filter pills */}
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {FILTERS.map((f) => (
-                <Button
-                  key={f.key}
-                  variant={filter === f.key ? "default" : "outline"}
-                  size="sm"
-                  className="rounded-full"
-                  onClick={() => setFilter(f.key)}
-                >
-                  {f.label}
-                </Button>
-              ))}
-            </div>
-
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8" />
-                    <TableHead className="w-8">#</TableHead>
-                    <TableHead>Article</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-center">Qté</TableHead>
-                    <TableHead className="text-right">Estimé</TableHead>
-                    <TableHead className="text-right">Prix réel</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {grouped
-                    ? (["today", "jourj", "done"] as Status[]).flatMap((st) => {
-                        const g = rows.filter((i) => i.status === st)
-                        if (!g.length) return []
-                        const sub = g.reduce((s, i) => s + i.total, 0)
-                        return [
-                          <TableRow key={`h-${st}`} className="bg-muted/40 hover:bg-muted/40">
-                            <TableCell colSpan={5} className="text-muted-foreground text-[0.6875rem] font-semibold tracking-wide uppercase">
-                              {STATUS_META[st].short} {STATUS_META[st].label} · {g.length}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-semibold">{fmt(sub)}</TableCell>
-                            <TableCell />
-                          </TableRow>,
-                          ...g.map((i) => (
-                            <ItemRow
-                              key={i.id}
-                              item={i}
-                              checked={isChecked(state, i.id)}
-                              price={state.prices[i.id] ?? ""}
-                              onToggle={toggle}
-                              onPrice={setPrice}
-                            />
-                          )),
-                        ]
-                      })
-                    : rows.map((i) => (
-                        <ItemRow
-                          key={i.id}
-                          item={i}
-                          checked={isChecked(state, i.id)}
-                          price={state.prices[i.id] ?? ""}
-                          onToggle={toggle}
-                          onPrice={setPrice}
-                        />
-                      ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={5} className="font-semibold">
-                      TOTAL {filter === "all" && !query ? "général" : "(filtré)"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-bold">{fmt(grandSub)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-bold">
-                      {grandReal > 0 ? fmt(grandReal) : "—"}
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
-
+            <ItemsTable
+              state={state}
+              onToggle={toggle}
+              onToggleAll={toggleAll}
+              onSetPrice={setPrice}
+            />
             <div className="mt-3 flex items-center justify-between">
               <div className="text-muted-foreground flex gap-3 text-[0.6875rem]">
                 <span className="flex items-center gap-1.5">
@@ -479,87 +315,11 @@ export function DotDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-4">
+        <OtherExpenses />
+      </div>
     </div>
-  )
-}
-
-function ItemRow({
-  item,
-  checked,
-  price,
-  onToggle,
-  onPrice,
-}: {
-  item: Item
-  checked: boolean
-  price: string
-  onToggle: (id: number, v: boolean) => void
-  onPrice: (id: number, v: string) => void
-}) {
-  const raw = price.replace(/\s/g, "")
-  const real = raw === "" ? null : Number(raw)
-  const hasReal = real != null && !Number.isNaN(real)
-  const over = hasReal && real > item.total
-  const under = hasReal && real < item.total
-  const meta = STATUS_META[item.status]
-
-  return (
-    <TableRow className={cn(checked && "text-muted-foreground")}>
-      <TableCell>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onToggle(item.id, e.target.checked)}
-          className="accent-primary size-4 cursor-pointer rounded"
-          aria-label={`Marquer ${item.art}`}
-        />
-      </TableCell>
-      <TableCell className="text-muted-foreground tabular-nums">{item.id}</TableCell>
-      <TableCell>
-        <span className={cn("font-medium", checked && "line-through")}>
-          {item.art.split(" (")[0]}
-        </span>
-        {item.cash && (
-          <Badge variant="muted" className="ml-1.5 bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
-            <IconCash className="size-3" /> Cash
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell>
-        <Badge className={cn("font-medium", STATUS_BADGE[item.status])}>
-          {meta.short} {meta.label}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-muted-foreground text-center tabular-nums">{item.qte}</TableCell>
-      <TableCell className="text-right tabular-nums font-medium">{fmt(item.total)}</TableCell>
-      <TableCell className="text-right">
-        <Input
-          inputMode="numeric"
-          value={price}
-          onChange={(e) => onPrice(item.id, e.target.value)}
-          placeholder="prix réel…"
-          className={cn(
-            "ml-auto h-7 w-28 text-right tabular-nums",
-            over && "border-rose-400 bg-rose-50 dark:bg-rose-500/10",
-            under && "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
-          )}
-        />
-        {hasReal && (
-          <div
-            className={cn(
-              "mt-1 text-[0.625rem] font-semibold tabular-nums",
-              over ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
-            )}
-          >
-            {over
-              ? `▲ +${fmt(real - item.total)}`
-              : under
-                ? `▼ −${fmt(item.total - real)}`
-                : "✓ identique"}
-          </div>
-        )}
-      </TableCell>
-    </TableRow>
   )
 }
 
@@ -578,7 +338,7 @@ function Header() {
           Tableau de bord des achats
         </h1>
         <p className="text-muted-foreground mt-0.5 text-xs">
-          Cochez les achats et saisissez les prix réels — tout est sauvegardé localement.
+          Cochez les achats au fur et à mesure — modifiez les prix réels via la fenêtre d&apos;édition. Suivi sauvegardé localement.
         </p>
       </div>
       <Button

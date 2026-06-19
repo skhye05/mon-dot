@@ -4,7 +4,12 @@ import * as React from "react"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-type Segment = { label: string; value: number; color: string }
+type Segment = {
+  label: string
+  value: number
+  color: string
+  Icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+}
 
 function polar(cx: number, cy: number, r: number, angle: number) {
   const a = (angle - 90) * (Math.PI / 180)
@@ -92,10 +97,11 @@ export function ChartLegend({ segments }: { segments: Segment[] }) {
     <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
       {segments.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 text-[0.6875rem]">
-          <span
-            className="size-2 rounded-full"
-            style={{ background: s.color }}
-          />
+          {s.Icon ? (
+            <s.Icon className="size-3.5" style={{ color: s.color }} />
+          ) : (
+            <span className="size-2 rounded-full" style={{ background: s.color }} />
+          )}
           <span className="text-muted-foreground">{s.label}</span>
         </div>
       ))}
