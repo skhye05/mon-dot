@@ -24,9 +24,9 @@ Guidance for Claude Code (and other agents) working in this repository.
 apps/web/                 # the Next.js app
   app/                    # App Router (page.tsx renders <DotDashboard/>)
   components/
-    dashboard/            # dot-dashboard.tsx (orchestrator: KPIs/charts), items-table.tsx
+    dashboard/            # dot-dashboard.tsx (orchestrator: KPIs/charts/recap), items-table.tsx
                           #   (TanStack data table + edit dialog), charts.tsx,
-                          #   other-expenses.tsx (standalone "Autres dépenses" ledger)
+                          #   predot.tsx (standalone "Pré-dot" expense ledger)
     theme-provider.tsx
   lib/dot-data.ts         # typed items + compute()/fmt() + localStorage seed
 packages/ui/              # @workspace/ui — shared shadcn package
@@ -73,4 +73,4 @@ Per-app: `cd apps/web && pnpm dev|build|typecheck`. After changes, prefer `pnpm 
 
 `lib/dot-data.ts` is the single source of truth. Each `Item` has `id`, `art`, `qte`, `total` (estimated FCFA), `status` (`paid` | `pending` | `cash` — the real payment status), and an optional `real` (seed real price, FCFA). There is no separate `bought`/`cash` field: the initial check-off seed derives from `status !== "pending"`, and the interactive checkbox tracks acquisition thereafter. **Real prices are editable at runtime** via the per-row edit dialog (pencil icon) — `realOf(state, id)` reads the persisted `prices` override (seeded from `real`), so edit `ITEMS[].real` to change the *default*, or use the dialog to change the *live* value. `compute(state)` derives all KPIs (engaged, real spend, savings, remaining, pending total, per-status totals). To change the list, edit `ITEMS`; the UI and totals follow automatically.
 
-**`OTHER_EXPENSES`** (also in `lib/dot-data.ts`) is a separate, static ledger rendered by `other-expenses.tsx` ("Autres dépenses" — pré-dot cash + the Spar Bastos receipt: rum + sodas). It tracks spend outside the formal dot list and is **deliberately NOT folded into the dot KPIs** — keep it standalone.
+**`PREDOT_EXPENSES`** (also in `lib/dot-data.ts`) is a separate, static ledger rendered by `predot.tsx` ("Pré-dot" — cash + whisky bought in ZAR + the Spar Bastos rum/sodas). It tracks spend outside the formal dot list and is **deliberately NOT folded into the dot KPIs**. The "Récapitulatif général" card in `dot-dashboard.tsx` sums `compute().realSum` + `predotTotal()` for the grand total.

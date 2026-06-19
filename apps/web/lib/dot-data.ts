@@ -147,43 +147,28 @@ export function compute(state: DotState): Computed {
   }
 }
 
-/** Expenses tracked outside the formal dot list (pre-dot ceremony, receipts). */
-export type OtherExpense = {
+/** A pré-dot expense line (amounts in FCFA). */
+export type PredotItem = {
   label: string
   detail?: string
   amount: number
   cash?: boolean
 }
 
-export type OtherExpenseGroup = {
-  group: string
-  note?: string
-  items: OtherExpense[]
-}
-
 /**
- * Standalone ledger — pré-dot cash + the Spar Bastos receipt (rum + sodas).
- * Tracks spend outside the formal dot list; NOT folded into the dot KPIs.
+ * Pré-dot ledger — cash + whisky (bought in ZAR) + the Spar Bastos receipt (rum + sodas).
+ * Tracked outside the formal dot list; NOT folded into the dot KPIs.
+ * Whisky converted at ≈ 34,5 FCFA / ZAR (juin 2026).
  */
-export const OTHER_EXPENSES: OtherExpenseGroup[] = [
-  {
-    group: "Pré-dot",
-    items: [{ label: "Pré-dot", detail: "espèces", amount: 150000, cash: true }],
-  },
-  {
-    group: "Spar Bastos (Deelite)",
-    note: "reçu du 16/06/2026 — espèces (20 000, rendu 510)",
-    items: [
-      { label: "Saint James Rhum Ambré 100 cl", detail: "1 btl × 13 490", amount: 13490 },
-      { label: "Top Grenadine PET 100 cl", detail: "6 pcs × 500", amount: 3000 },
-      { label: "Top Orange 100 cl", detail: "6 pcs × 500", amount: 3000 },
-    ],
-  },
+export const PREDOT_EXPENSES: PredotItem[] = [
+  { label: "Espèces", amount: 150000, cash: true },
+  { label: "Jack Daniels 1L", detail: "429 ZAR", amount: 14800 },
+  { label: "Black Label 1L", detail: "589 ZAR", amount: 20320 },
+  { label: "Saint James Rhum Ambré 100 cl", detail: "Spar Bastos · 1 btl × 13 490", amount: 13490 },
+  { label: "Top Grenadine PET 100 cl", detail: "Spar Bastos · 6 pcs × 500", amount: 3000 },
+  { label: "Top Orange 100 cl", detail: "Spar Bastos · 6 pcs × 500", amount: 3000 },
 ]
 
-export function otherExpensesTotal(): number {
-  return OTHER_EXPENSES.reduce(
-    (s, g) => s + g.items.reduce((a, i) => a + i.amount, 0),
-    0
-  )
+export function predotTotal(): number {
+  return PREDOT_EXPENSES.reduce((s, i) => s + i.amount, 0)
 }

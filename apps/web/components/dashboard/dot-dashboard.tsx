@@ -24,7 +24,7 @@ import {
 } from "@workspace/ui/components/card"
 import { Donut, ChartLegend, CompareBars } from "@/components/dashboard/charts"
 import { ItemsTable } from "@/components/dashboard/items-table"
-import { OtherExpenses } from "@/components/dashboard/other-expenses"
+import { PredotExpenses } from "@/components/dashboard/predot"
 import {
   ITEMS,
   STATUS_META,
@@ -32,7 +32,7 @@ import {
   compute,
   fmt,
   isChecked,
-  otherExpensesTotal,
+  predotTotal,
   realOf,
   seedState,
   type DotState,
@@ -70,7 +70,7 @@ export function DotDashboard() {
 
   const c = React.useMemo(() => compute(state), [state])
   const pct = Math.round((c.boughtEstime / c.totalEstime) * 100)
-  const otherTotal = otherExpensesTotal()
+  const predot = predotTotal()
 
   function toggle(id: number, value: boolean) {
     setState((s) => ({ ...s, checked: { ...s.checked, [id]: value } }))
@@ -319,14 +319,14 @@ export function DotDashboard() {
       </div>
 
       <div className="mt-4">
-        <OtherExpenses />
+        <PredotExpenses />
       </div>
 
       <div className="mt-4">
         <Card>
           <CardHeader>
             <CardTitle>Récapitulatif général</CardTitle>
-            <CardDescription>Tout cumulé — dot + autres dépenses</CardDescription>
+            <CardDescription>Tout cumulé — dot + pré-dot</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -335,16 +335,16 @@ export function DotDashboard() {
                   Total général dépensé
                 </div>
                 <div className="mt-0.5 text-3xl font-bold tracking-tight tabular-nums">
-                  {fmt(c.realSum + otherTotal)}
+                  {fmt(c.realSum + predot)}
                 </div>
                 <div className="text-muted-foreground mt-1 text-[0.6875rem]">
-                  dont {fmt(c.realSum)} dot + {fmt(otherTotal)} autres
+                  dont {fmt(c.realSum)} dot + {fmt(predot)} pré-dot
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 <RecapStat label="Dépense dot (réel)" value={fmt(c.realSum)} />
-                <RecapStat label="Autres dépenses" value={fmt(otherTotal)} />
-                <RecapStat label="Total dépensé" value={fmt(c.realSum + otherTotal)} highlight />
+                <RecapStat label="Pré-dot" value={fmt(predot)} />
+                <RecapStat label="Total dépensé" value={fmt(c.realSum + predot)} highlight />
                 <RecapStat label="Budget dot (estimé)" value={fmt(c.totalEstime)} />
               </div>
             </div>
