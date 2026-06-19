@@ -1,159 +1,147 @@
 "use client"
 
 import * as React from "react"
+import { Bar, BarChart, Cell, Label, Pie, PieChart, XAxis, YAxis } from "recharts"
 
-import { cn } from "@workspace/ui/lib/utils"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@workspace/ui/components/chart"
 
-type Segment = {
+export const C_PAID = "#22c55e"
+export const C_CASH = "#f59e0b"
+export const C_PENDING = "#8b5cf6"
+export const C_ENGAGE = "#7c3aed"
+
+export type StatusDatum = {
+  key: string
   label: string
   value: number
-  color: string
-  Icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+  fill: string
 }
 
-function polar(cx: number, cy: number, r: number, angle: number) {
-  const a = (angle - 90) * (Math.PI / 180)
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
-}
-
-function arcPath(
-  cx: number,
-  cy: number,
-  r: number,
-  start: number,
-  end: number
-) {
-  const s = polar(cx, cy, r, end)
-  const e = polar(cx, cy, r, start)
-  const large = end - start <= 180 ? 0 : 1
-  return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 0 ${e.x} ${e.y}`
-}
-
-/** Donut built from stroked arcs — no external chart lib. */
-export function Donut({
-  segments,
-  size = 168,
-  thickness = 16,
-  centerTop,
-  centerBottom,
+/** Budget progress — donut with the engaged % in the center. */
+export function BudgetDonut({
+  engaged,
+  total,
+  pct,
 }: {
-  segments: Segment[]
-  size?: number
-  thickness?: number
-  centerTop?: React.ReactNode
-  centerBottom?: React.ReactNode
+  engaged: number
+  total: number
+  pct: number
 }) {
-  const total = segments.reduce((s, x) => s + x.value, 0) || 1
-  const r = (size - thickness) / 2
-  const cx = size / 2
-  const cy = size / 2
-  // prefix sums so we don't mutate during render
-  const offsets: number[] = []
-  segments.reduce((acc, seg) => {
-    offsets.push(acc)
-    return acc + seg.value
-  }, 0)
+  const data = [
+    { key: "engaged", value: engaged, fill: C_ENGAGE },
+    { key: "remaining", value: Math.max(0, total - engaged), fill: "var(--muted)" },
+  ]
+  const config = {
+    value: { label: "FCFA" },
+    engaged: { label: "Engagé", color: C_ENGAGE },
+    remaining: { label: "Reste", color: "var(--muted)" },
+  } satisfies ChartConfig
 
   return (
-    <div className="relative mx-auto" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          className="stroke-muted"
-          strokeWidth={thickness}
+    <ChartContainer config={config} className="mx-auto aspect-square max-h-[180px]">
+      <PieChart>
+        <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="key" hideLabel />} />
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="key"
+          innerRadius={58}
+          outerRadius={82}
+          strokeWidth={2}
+          startAngle={90}
+          endAngle={-270}
+        >
+          {data.map((d) => (
+            <Cell key={d.key} fill={d.fill} />
+          ))}
+          <Label
+            content={({ viewBox }) => {
+              if (viewBox && "cx" in viewBox && viewBox.cx != null && viewBox.cy != null) {
+                return (
+                  <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                    <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-2xl font-bold tabular-nums">
+                      {pct}%
+                    </tspan>
+                    <tspan x={viewBox.cx} y={Number(viewBox.cy) + 18} className="fill-muted-foreground text-[0.6875rem]">
+                      engagé
+                    </tspan>
+                  </text>
+                )
+              }
+              return null
+            }}
+          />
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  )
+}
+
+/** Budget breakdown by payment status — donut + legend. */
+export function StatusDonut({ data }: { data: StatusDatum[] }) {
+  const config: ChartConfig = { value: { label: "FCFA" } }
+  data.forEach((d) => {
+    config[d.key] = { label: d.label, color: d.fill }
+  })
+
+  return (
+    <ChartContainer config={config} className="mx-auto aspect-square max-h-[200px]">
+      <PieChart>
+        <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="key" hideLabel />} />
+        <Pie data={data} dataKey="value" nameKey="key" innerRadius={50} outerRadius={80} strokeWidth={2}>
+          {data.map((d) => (
+            <Cell key={d.key} fill={d.fill} />
+          ))}
+        </Pie>
+        <ChartLegend
+          content={<ChartLegendContent nameKey="key" />}
+          className="-translate-y-1 flex-wrap gap-x-4 gap-y-1"
         />
-        {segments.map((seg, i) => {
-          const frac = seg.value / total
-          if (frac <= 0) return null
-          const start = ((offsets[i] ?? 0) / total) * 360
-          const end = start + frac * 360
-          return (
-            <path
-              key={i}
-              d={arcPath(cx, cy, r, start, Math.min(end, start + 359.999))}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth={thickness}
-              strokeLinecap="round"
-            />
-          )
-        })}
-      </svg>
-      {(centerTop || centerBottom) && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          {centerTop}
-          {centerBottom}
-        </div>
-      )}
-    </div>
+      </PieChart>
+    </ChartContainer>
   )
 }
 
-export function ChartLegend({ segments }: { segments: Segment[] }) {
-  return (
-    <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-      {segments.map((s, i) => (
-        <div key={i} className="flex items-center gap-1.5 text-[0.6875rem]">
-          {s.Icon ? (
-            <s.Icon className="size-3.5" style={{ color: s.color }} />
-          ) : (
-            <span className="size-2 rounded-full" style={{ background: s.color }} />
-          )}
-          <span className="text-muted-foreground">{s.label}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/** Horizontal comparison bars (estimé vs réel) in pure markup. */
-export function CompareBars({
+/** Estimé vs Réel — grouped horizontal bars for the biggest purchases. */
+export function CompareChart({
   rows,
-  max,
 }: {
   rows: { label: string; est: number; real: number }[]
-  max: number
 }) {
-  const scale = (v: number) => `${Math.max(2, (v / (max || 1)) * 100)}%`
+  const config = {
+    est: { label: "Estimé", color: "var(--chart-2)" },
+    real: { label: "Réel", color: C_PAID },
+  } satisfies ChartConfig
+
   return (
-    <div className="flex flex-col gap-3">
-      {rows.map((row, i) => (
-        <div key={i} className="flex flex-col gap-1">
-          <div className="text-muted-foreground flex items-center justify-between text-[0.6875rem]">
-            <span className="truncate">{row.label}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="bg-muted/60 h-2 flex-1 overflow-hidden rounded-full">
-              <div
-                className="bg-chart-2 h-full rounded-full"
-                style={{ width: scale(row.est) }}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="bg-muted/60 h-2 flex-1 overflow-hidden rounded-full">
-              <div
-                className={cn(
-                  "h-full rounded-full",
-                  row.real <= row.est ? "bg-emerald-500" : "bg-rose-500"
-                )}
-                style={{ width: scale(row.real) }}
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-      <div className="text-muted-foreground mt-1 flex gap-4 text-[0.625rem]">
-        <span className="flex items-center gap-1.5">
-          <span className="bg-chart-2 size-2 rounded-full" /> Estimé
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="bg-emerald-500 size-2 rounded-full" /> Réel
-        </span>
-      </div>
-    </div>
+    <ChartContainer config={config} className="aspect-auto h-[200px] w-full">
+      <BarChart
+        accessibilityLayer
+        data={rows}
+        layout="vertical"
+        margin={{ left: 4, right: 8, top: 4, bottom: 0 }}
+      >
+        <XAxis type="number" hide />
+        <YAxis
+          type="category"
+          dataKey="label"
+          width={96}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 10 }}
+          tickFormatter={(v: string) => (v.length > 14 ? v.slice(0, 13) + "…" : v)}
+        />
+        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+        <Bar dataKey="est" fill="var(--color-est)" radius={3} barSize={7} />
+        <Bar dataKey="real" fill="var(--color-real)" radius={3} barSize={7} />
+      </BarChart>
+    </ChartContainer>
   )
 }

@@ -15,6 +15,7 @@ Guidance for Claude Code (and other agents) working in this repository.
 - **shadcn/ui**, style `radix-mira`, base color `neutral`, CSS variables, oklch tokens
 - **Icons:** `@tabler/icons-react`
 - **Data table:** `@tanstack/react-table` (powers the items table — `apps/web/components/dashboard/items-table.tsx`)
+- **Charts:** `recharts` via the shadcn `chart` primitive (`@workspace/ui/components/chart`); chart compositions (donuts, bars) in `apps/web/components/dashboard/charts.tsx`
 - **Theme:** `next-themes` (light/dark; `d` key toggles dark mode globally, see `apps/web/components/theme-provider.tsx`)
 - **Package manager:** pnpm `10.33.4` · Node `>=20`
 
@@ -31,7 +32,7 @@ apps/web/                 # the Next.js app
   lib/dot-data.ts         # typed items + compute()/fmt() + localStorage seed
 packages/ui/              # @workspace/ui — shared shadcn package
   src/components/         # ALL shadcn primitives live here (button, card, badge, input, table,
-                          #   progress, checkbox, select, dialog, label) — @workspace/ui/components/<name>
+                          #   progress, checkbox, select, dialog, label, chart) — @workspace/ui/components/<name>
   src/lib/utils.ts        # cn()
   src/styles/globals.css  # Tailwind v4 theme + tokens
 packages/eslint-config/   # @workspace/eslint-config

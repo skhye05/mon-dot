@@ -23,12 +23,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
-import { Donut, ChartLegend, CompareBars } from "@/components/dashboard/charts"
+import {
+  BudgetDonut,
+  CompareChart,
+  StatusDonut,
+  C_PAID,
+  C_CASH,
+  C_PENDING,
+} from "@/components/dashboard/charts"
 import { ItemsTable } from "@/components/dashboard/items-table"
 import { PredotExpenses } from "@/components/dashboard/predot"
 import {
   ITEMS,
-  STATUS_META,
   STORAGE_KEY,
   TRANSPORT_VILLAGE,
   compute,
@@ -39,11 +45,6 @@ import {
   seedState,
   type DotState,
 } from "@/lib/dot-data"
-
-const C_PAID = "#22c55e"
-const C_CASH = "#f59e0b"
-const C_PENDING = "#8b5cf6"
-const C_ENGAGE = "#7c3aed"
 
 export function DotDashboard() {
   const [state, setState] = React.useState<DotState>(seedState)
@@ -109,7 +110,6 @@ export function DotDashboard() {
         real: realOf(state, i.id) ?? 0,
       }))
   }, [state])
-  const compareMax = Math.max(1, ...compareRows.flatMap((r) => [r.est, r.real]))
 
   const sortedDeltas = React.useMemo(
     () => [...c.deltas].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 7),
@@ -166,10 +166,10 @@ export function DotDashboard() {
     },
   ]
 
-  const statusSegments = [
-    { label: "Payé", value: c.byStatus.paid, color: C_PAID, Icon: STATUS_META.paid.Icon },
-    { label: "Cash", value: c.byStatus.cash, color: C_CASH, Icon: STATUS_META.cash.Icon },
-    { label: "En attente", value: c.byStatus.pending, color: C_PENDING, Icon: STATUS_META.pending.Icon },
+  const statusData = [
+    { key: "paid", label: "Payé", value: c.byStatus.paid, fill: C_PAID },
+    { key: "cash", label: "Cash", value: c.byStatus.cash, fill: C_CASH },
+    { key: "pending", label: "En attente", value: c.byStatus.pending, fill: C_PENDING },
   ]
 
   return (
@@ -204,11 +204,7 @@ export function DotDashboard() {
             <CardDescription>Valeur estimée des articles cochés</CardDescription>
           </CardHeader>
           <CardContent>
-            <Donut
-              segments={[{ label: "Engagé", value: c.boughtEstime, color: C_ENGAGE }]}
-              centerTop={<span className="text-2xl font-bold tracking-tight tabular-nums">{pct}%</span>}
-              centerBottom={<span className="text-muted-foreground text-[0.6875rem]">engagé</span>}
-            />
+            <BudgetDonut engaged={c.boughtEstime} total={c.totalEstime} pct={pct} />
             <div className="text-muted-foreground mt-3 text-center text-[0.6875rem]">
               {fmt(c.boughtEstime)} / {fmt(c.totalEstime)}
             </div>
@@ -222,7 +218,7 @@ export function DotDashboard() {
           </CardHeader>
           <CardContent>
             {compareRows.length ? (
-              <CompareBars rows={compareRows} max={compareMax} />
+              <CompareChart rows={compareRows} />
             ) : (
               <p className="text-muted-foreground text-xs">Aucun prix réel.</p>
             )}
@@ -235,8 +231,7 @@ export function DotDashboard() {
             <CardDescription>Part du budget total estimé</CardDescription>
           </CardHeader>
           <CardContent>
-            <Donut segments={statusSegments} thickness={20} />
-            <ChartLegend segments={statusSegments} />
+            <StatusDonut data={statusData} />
           </CardContent>
         </Card>
       </div>
