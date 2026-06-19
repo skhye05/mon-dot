@@ -32,6 +32,7 @@ import {
   compute,
   fmt,
   isChecked,
+  otherExpensesTotal,
   realOf,
   seedState,
   type DotState,
@@ -69,6 +70,7 @@ export function DotDashboard() {
 
   const c = React.useMemo(() => compute(state), [state])
   const pct = Math.round((c.boughtEstime / c.totalEstime) * 100)
+  const otherTotal = otherExpensesTotal()
 
   function toggle(id: number, value: boolean) {
     setState((s) => ({ ...s, checked: { ...s.checked, [id]: value } }))
@@ -318,6 +320,62 @@ export function DotDashboard() {
 
       <div className="mt-4">
         <OtherExpenses />
+      </div>
+
+      <div className="mt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Récapitulatif général</CardTitle>
+            <CardDescription>Tout cumulé — dot + autres dépenses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
+                  Total général dépensé
+                </div>
+                <div className="mt-0.5 text-3xl font-bold tracking-tight tabular-nums">
+                  {fmt(c.realSum + otherTotal)}
+                </div>
+                <div className="text-muted-foreground mt-1 text-[0.6875rem]">
+                  dont {fmt(c.realSum)} dot + {fmt(otherTotal)} autres
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <RecapStat label="Dépense dot (réel)" value={fmt(c.realSum)} />
+                <RecapStat label="Autres dépenses" value={fmt(otherTotal)} />
+                <RecapStat label="Total dépensé" value={fmt(c.realSum + otherTotal)} highlight />
+                <RecapStat label="Budget dot (estimé)" value={fmt(c.totalEstime)} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function RecapStat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border px-3 py-2",
+        highlight && "border-foreground/20 bg-muted/50"
+      )}
+    >
+      <div className="text-muted-foreground text-[0.625rem] font-medium tracking-wide uppercase">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-bold tracking-tight tabular-nums">
+        {value}
       </div>
     </div>
   )

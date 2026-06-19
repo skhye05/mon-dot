@@ -162,9 +162,8 @@ export type OtherExpenseGroup = {
 }
 
 /**
- * Standalone ledger — NOT folded into the dot KPIs. The Santa Lucia receipt
- * (jus + vin) is the source document for dot items #15 and #17, so it's shown
- * here as a record, not as additional spend.
+ * Standalone ledger — pré-dot cash + the Spar Bastos receipt (rum + sodas).
+ * Tracks spend outside the formal dot list; NOT folded into the dot KPIs.
  */
 export const OTHER_EXPENSES: OtherExpenseGroup[] = [
   {
@@ -172,16 +171,12 @@ export const OTHER_EXPENSES: OtherExpenseGroup[] = [
     items: [{ label: "Pré-dot", detail: "espèces", amount: 150000, cash: true }],
   },
   {
-    group: "Santa Lucia (Agence Mokolo)",
-    note: "reçu — = articles #15 (vin) et #17 (jus) de la dot",
+    group: "Spar Bastos (Deelite)",
+    note: "reçu du 16/06/2026 — espèces (20 000, rendu 510)",
     items: [
-      { label: "Jus Brass Top Orange 1L", detail: "1 palette de 6 × 2 850", amount: 2850 },
-      { label: "Jus Brass Grenadine 1L", detail: "1 palette de 6 × 2 850", amount: 2850 },
-      { label: "Jus Brass Pamplemousse 1L", detail: "1 palette de 6 × 2 850", amount: 2850 },
-      { label: "Jus Brasserie Ananas 1L", detail: "1 palette de 6 × 2 850", amount: 2850 },
-      { label: "Jus Brass Grenadine 1L", detail: "1 paquet de 3 × 1 425", amount: 1425 },
-      { label: "Jus Brass Top Orange 1L", detail: "1 paquet de 3 × 1 425", amount: 1425 },
-      { label: "Vin Vinosol Tetra Slim Brick 1L", detail: "5 palettes de 12 × 13 800", amount: 69000 },
+      { label: "Saint James Rhum Ambré 100 cl", detail: "1 btl × 13 490", amount: 13490 },
+      { label: "Top Grenadine PET 100 cl", detail: "6 pcs × 500", amount: 3000 },
+      { label: "Top Orange 100 cl", detail: "6 pcs × 500", amount: 3000 },
     ],
   },
 ]
