@@ -239,8 +239,8 @@ export function DotDashboard() {
         </Card>
       </div>
 
-      {/* Savings + table */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+      {/* Savings on top, then table */}
+      <div className="flex flex-col gap-4">
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Économies réalisées</CardTitle>
