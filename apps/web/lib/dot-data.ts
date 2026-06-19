@@ -35,9 +35,9 @@ export const ITEMS: Item[] = [
   { id: 17, art: "Casiers de jus (Brass — acheté à l'avance)", qte: 5, total: 12500, status: "paid", real: 14250 },
   { id: 18, art: "Bouteilles de whisky (JD, BL, J&B)", qte: 3, total: 120000, status: "paid", real: 120000 },
   { id: 19, art: "Enveloppe", qte: 1, total: 250000, status: "paid", real: 250000 },
-  { id: 20, art: "Cocottes-minutes (8 et 10 L)", qte: 2, total: 72000, status: "pending" },
+  { id: 20, art: "Cocottes-minutes (8 et 10 L)", qte: 2, total: 24000, status: "paid", real: 72000 },
   { id: 21, art: "Marmites (alu + alubassa)", qte: 4, total: 150000, status: "paid", real: 87000 },
-  { id: 22, art: "Marmites « TEFAL » (2 × Super Cook 9,4 L)", qte: 2, total: 63000, status: "pending" },
+  { id: 22, art: "Marmites « TEFAL » (2 × Super Cook 9,4 L)", qte: 2, total: 5000, status: "paid", real: 63000 },
   { id: 23, art: "Four à micro-ondes", qte: 1, total: 150000, status: "cash", real: 150000 },
   { id: 24, art: "Machettes (coupe-coupe)", qte: 2, total: 3000, status: "paid", real: 3000 },
   { id: 25, art: "Limes (à affûter)", qte: 2, total: 1500, status: "paid", real: 1500 },
@@ -52,8 +52,8 @@ export const STATUS_META: Record<
   pending: { label: "En attente", Icon: IconClock, rank: 2 },
 }
 
-/** Bumped to v4: Porcs/Mouton now settled (paid) + revised estimates for cocottes/Tefal. */
-export const STORAGE_KEY = "dot-mbenoun-next-v4"
+/** Bumped to v5: cocottes/Tefal now settled (paid, prix réel = estimé). */
+export const STORAGE_KEY = "dot-mbenoun-next-v5"
 
 export type DotState = {
   checked: Record<number, boolean>
