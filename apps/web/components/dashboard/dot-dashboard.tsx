@@ -101,7 +101,9 @@ export function DotDashboard() {
   }
 
   const compareRows = React.useMemo(() => {
-    return ITEMS.filter((i) => isChecked(state, i.id) && realOf(state, i.id) != null)
+    return ITEMS.filter(
+      (i) => isChecked(state, i.id) && realOf(state, i.id) != null
+    )
       .sort((a, b) => b.total - a.total)
       .slice(0, 6)
       .map((i) => ({
@@ -112,7 +114,10 @@ export function DotDashboard() {
   }, [state])
 
   const sortedDeltas = React.useMemo(
-    () => [...c.deltas].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 7),
+    () =>
+      [...c.deltas]
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 7),
     [c.deltas]
   )
   const deltaMax = Math.max(1, ...sortedDeltas.map((d) => Math.abs(d.delta)))
@@ -148,7 +153,10 @@ export function DotDashboard() {
         c.savings >= 0
           ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
           : "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
-      valueClass: c.savings >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
+      valueClass:
+        c.savings >= 0
+          ? "text-emerald-600 dark:text-emerald-400"
+          : "text-rose-600 dark:text-rose-400",
     },
     {
       label: "En attente",
@@ -169,8 +177,24 @@ export function DotDashboard() {
   const statusData = [
     { key: "paid", label: "Payé", value: c.byStatus.paid, fill: C_PAID },
     { key: "cash", label: "Cash", value: c.byStatus.cash, fill: C_CASH },
-    { key: "pending", label: "En attente", value: c.byStatus.pending, fill: C_PENDING },
+    {
+      key: "pending",
+      label: "En attente",
+      value: c.byStatus.pending,
+      fill: C_PENDING,
+    },
   ]
+
+  const statusRealData = [
+    { key: "paid", label: "Payé", value: c.byStatusReal.paid, fill: C_PAID },
+    { key: "cash", label: "Cash", value: c.byStatusReal.cash, fill: C_CASH },
+    {
+      key: "pending",
+      label: "En attente",
+      value: c.byStatusReal.pending,
+      fill: C_PENDING,
+    },
+  ].filter((d) => d.value > 0)
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -181,16 +205,28 @@ export function DotDashboard() {
         {kpis.map((k) => (
           <Card key={k.label} className="gap-2 py-4">
             <CardContent className="px-4">
-              <div className={cn("mb-2.5 flex size-8 items-center justify-center rounded-lg", k.tint)}>
+              <div
+                className={cn(
+                  "mb-2.5 flex size-8 items-center justify-center rounded-lg",
+                  k.tint
+                )}
+              >
                 <k.Icon className="size-4" stroke={2} />
               </div>
-              <div className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
+              <div className="text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase">
                 {k.label}
               </div>
-              <div className={cn("mt-0.5 text-lg font-bold tracking-tight tabular-nums", k.valueClass)}>
+              <div
+                className={cn(
+                  "mt-0.5 text-lg font-bold tracking-tight tabular-nums",
+                  k.valueClass
+                )}
+              >
                 {k.value}
               </div>
-              <div className="text-muted-foreground mt-1 text-[0.6875rem]">{k.sub}</div>
+              <div className="mt-1 text-[0.6875rem] text-muted-foreground">
+                {k.sub}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -201,11 +237,17 @@ export function DotDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Avancement du budget</CardTitle>
-            <CardDescription>Valeur estimée des articles cochés</CardDescription>
+            <CardDescription>
+              Valeur estimée des articles cochés
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <BudgetDonut engaged={c.boughtEstime} total={c.totalEstime} pct={pct} />
-            <div className="text-muted-foreground mt-3 text-center text-[0.6875rem]">
+            <BudgetDonut
+              engaged={c.boughtEstime}
+              total={c.totalEstime}
+              pct={pct}
+            />
+            <div className="mt-3 text-center text-[0.6875rem] text-muted-foreground">
               {fmt(c.boughtEstime)} / {fmt(c.totalEstime)}
             </div>
           </CardContent>
@@ -220,14 +262,14 @@ export function DotDashboard() {
             {compareRows.length ? (
               <CompareChart rows={compareRows} />
             ) : (
-              <p className="text-muted-foreground text-xs">Aucun prix réel.</p>
+              <p className="text-xs text-muted-foreground">Aucun prix réel.</p>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Répartition par statut</CardTitle>
+            <CardTitle>Répartition par statut (estimé)</CardTitle>
             <CardDescription>Part du budget total estimé</CardDescription>
           </CardHeader>
           <CardContent>
@@ -236,60 +278,89 @@ export function DotDashboard() {
         </Card>
       </div>
 
-      {/* Savings on top, then table */}
+      {/* Savings + statut réel side by side, then table */}
       <div className="flex flex-col gap-4">
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Économies réalisées</CardTitle>
-            <CardDescription>Prix réel vs estimé sur les achats</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={cn(
-                "text-3xl font-bold tracking-tight tabular-nums",
-                c.savings >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-              )}
-            >
-              {c.savings >= 0 ? "+" : ""}
-              {fmt(c.savings)}
-            </div>
-            <div className="text-muted-foreground mt-1 mb-4 text-[0.6875rem]">
-              {c.deltas.length
-                ? `sur ${c.deltas.length} articles · réel ${fmt(c.realBought)}`
-                : "Aucun prix réel"}
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {sortedDeltas.map(({ item, delta }) => {
-                const pos = delta >= 0
-                return (
-                  <div key={item.id} className="flex items-center gap-2 text-xs">
-                    <span className="min-w-0 flex-1 truncate">{item.art.split(" (")[0]}</span>
-                    <span className="bg-muted/60 h-1.5 w-16 overflow-hidden rounded-full">
-                      <span
-                        className={cn("block h-full rounded-full", pos ? "bg-emerald-500" : "bg-rose-500")}
-                        style={{ width: `${(Math.abs(delta) / deltaMax) * 100}%` }}
-                      />
-                    </span>
-                    <span
-                      className={cn(
-                        "tabular-nums font-semibold",
-                        pos ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                      )}
+        <div className="grid items-start gap-4 lg:grid-cols-[2fr_1fr]">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>Économies réalisées</CardTitle>
+              <CardDescription>
+                Prix réel vs estimé sur les achats
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                className={cn(
+                  "text-3xl font-bold tracking-tight tabular-nums",
+                  c.savings >= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
+                )}
+              >
+                {c.savings >= 0 ? "+" : ""}
+                {fmt(c.savings)}
+              </div>
+              <div className="mt-1 mb-4 text-[0.6875rem] text-muted-foreground">
+                {c.deltas.length
+                  ? `sur ${c.deltas.length} articles · réel ${fmt(c.realBought)}`
+                  : "Aucun prix réel"}
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {sortedDeltas.map(({ item, delta }) => {
+                  const pos = delta >= 0
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2 text-xs"
                     >
-                      {pos ? "−" : "+"}
-                      {fmt(Math.abs(delta))}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.art.split(" (")[0]}
+                      </span>
+                      <span className="h-1.5 w-16 overflow-hidden rounded-full bg-muted/60">
+                        <span
+                          className={cn(
+                            "block h-full rounded-full",
+                            pos ? "bg-emerald-500" : "bg-rose-500"
+                          )}
+                          style={{
+                            width: `${(Math.abs(delta) / deltaMax) * 100}%`,
+                          }}
+                        />
+                      </span>
+                      <span
+                        className={cn(
+                          "font-semibold tabular-nums",
+                          pos
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-rose-600 dark:text-rose-400"
+                        )}
+                      >
+                        {pos ? "−" : "+"}
+                        {fmt(Math.abs(delta))}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Répartition par statut (réel)</CardTitle>
+              <CardDescription>Part de la dépense réelle</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StatusDonut data={statusRealData} />
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Articles</CardTitle>
-            <CardDescription>Cochez, filtrez, triez — éditez le prix réel par ligne</CardDescription>
+            <CardDescription>
+              Cochez, filtrez, triez — éditez le prix réel par ligne
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ItemsTable
@@ -299,12 +370,14 @@ export function DotDashboard() {
               onSetPrice={setPrice}
             />
             <div className="mt-3 flex items-center justify-between">
-              <div className="text-muted-foreground flex gap-3 text-[0.6875rem]">
+              <div className="flex gap-3 text-[0.6875rem] text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-emerald-500" /> sous budget
+                  <span className="size-2 rounded-full bg-emerald-500" /> sous
+                  budget
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-rose-500" /> dépassement
+                  <span className="size-2 rounded-full bg-rose-500" />{" "}
+                  dépassement
                 </span>
               </div>
               <Button variant="ghost" size="sm" onClick={reset}>
@@ -323,7 +396,9 @@ export function DotDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Transport vers le village</CardTitle>
-            <CardDescription>Estimation — {TRANSPORT_VILLAGE.days} jours</CardDescription>
+            <CardDescription>
+              Estimation — {TRANSPORT_VILLAGE.days} jours
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3">
@@ -334,7 +409,7 @@ export function DotDashboard() {
                 <div className="text-3xl font-bold tracking-tight tabular-nums">
                   {fmt(TRANSPORT_VILLAGE.amount)}
                 </div>
-                <div className="text-muted-foreground mt-0.5 text-[0.6875rem]">
+                <div className="mt-0.5 text-[0.6875rem] text-muted-foreground">
                   budget estimé · {TRANSPORT_VILLAGE.days} jours · ≈{" "}
                   {fmt(TRANSPORT_VILLAGE.amount / TRANSPORT_VILLAGE.days)}/jour
                 </div>
@@ -348,26 +423,36 @@ export function DotDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Récapitulatif général</CardTitle>
-            <CardDescription>Tout cumulé — dot + pré-dot + transport</CardDescription>
+            <CardDescription>
+              Tout cumulé — dot + pré-dot + transport
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
+                <div className="text-[0.6875rem] font-medium tracking-wide text-muted-foreground uppercase">
                   Total général
                 </div>
                 <div className="mt-0.5 text-3xl font-bold tracking-tight tabular-nums">
                   {fmt(c.realSum + predot + TRANSPORT_VILLAGE.amount)}
                 </div>
-                <div className="text-muted-foreground mt-1 text-[0.6875rem]">
-                  {fmt(c.realSum + predot)} dépensé + {fmt(TRANSPORT_VILLAGE.amount)} transport (estimé)
+                <div className="mt-1 text-[0.6875rem] text-muted-foreground">
+                  {fmt(c.realSum + predot)} dépensé +{" "}
+                  {fmt(TRANSPORT_VILLAGE.amount)} transport (estimé)
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 <RecapStat label="Dépense dot (réel)" value={fmt(c.realSum)} />
                 <RecapStat label="Pré-dot" value={fmt(predot)} />
-                <RecapStat label="Transport (estimé)" value={fmt(TRANSPORT_VILLAGE.amount)} />
-                <RecapStat label="Total général" value={fmt(c.realSum + predot + TRANSPORT_VILLAGE.amount)} highlight />
+                <RecapStat
+                  label="Transport (estimé)"
+                  value={fmt(TRANSPORT_VILLAGE.amount)}
+                />
+                <RecapStat
+                  label="Total général"
+                  value={fmt(c.realSum + predot + TRANSPORT_VILLAGE.amount)}
+                  highlight
+                />
               </div>
             </div>
           </CardContent>
@@ -393,7 +478,7 @@ function RecapStat({
         highlight && "border-foreground/20 bg-muted/50"
       )}
     >
-      <div className="text-muted-foreground text-[0.625rem] font-medium tracking-wide uppercase">
+      <div className="text-[0.625rem] font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </div>
       <div className="mt-0.5 text-sm font-bold tracking-tight tabular-nums">
@@ -411,14 +496,15 @@ function Header() {
   return (
     <div className="mb-5 flex items-end justify-between gap-4">
       <div>
-        <p className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.2em] uppercase">
+        <p className="text-[0.6875rem] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
           Famille Mbenoun · La Dot
         </p>
-        <h1 className="font-heading mt-1 text-2xl font-bold tracking-tight">
+        <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight">
           Tableau de bord des achats
         </h1>
-        <p className="text-muted-foreground mt-0.5 text-xs">
-          Cochez les achats au fur et à mesure — modifiez les prix réels via la fenêtre d&apos;édition. Suivi sauvegardé localement.
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Cochez les achats au fur et à mesure — modifiez les prix réels via la
+          fenêtre d&apos;édition. Suivi sauvegardé localement.
         </p>
       </div>
       <Button

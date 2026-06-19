@@ -95,6 +95,7 @@ export function isChecked(state: DotState, id: number): boolean {
 export type Computed = {
   totalEstime: number
   byStatus: Record<Status, number>
+  byStatusReal: Record<Status, number>
   boughtEstime: number
   remaining: number
   realSum: number
@@ -110,7 +111,11 @@ export type Computed = {
 export function compute(state: DotState): Computed {
   const totalEstime = ITEMS.reduce((s, i) => s + i.total, 0)
   const byStatus: Record<Status, number> = { paid: 0, cash: 0, pending: 0 }
-  for (const i of ITEMS) byStatus[i.status] += i.total
+  const byStatusReal: Record<Status, number> = { paid: 0, cash: 0, pending: 0 }
+  for (const i of ITEMS) {
+    byStatus[i.status] += i.total
+    byStatusReal[i.status] += realOf(state, i.id) ?? 0
+  }
 
   const checkedItems = ITEMS.filter((i) => isChecked(state, i.id))
   const boughtEstime = checkedItems.reduce((s, i) => s + i.total, 0)
@@ -134,6 +139,7 @@ export function compute(state: DotState): Computed {
   return {
     totalEstime,
     byStatus,
+    byStatusReal,
     boughtEstime,
     remaining,
     realSum,
