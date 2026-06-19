@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 import {
+  IconBus,
   IconCalendarDollar,
   IconCircleCheckFilled,
   IconClock,
@@ -29,6 +30,7 @@ import {
   ITEMS,
   STATUS_META,
   STORAGE_KEY,
+  TRANSPORT_VILLAGE,
   compute,
   fmt,
   isChecked,
@@ -325,27 +327,52 @@ export function DotDashboard() {
       <div className="mt-4">
         <Card>
           <CardHeader>
+            <CardTitle>Transport vers le village</CardTitle>
+            <CardDescription>Estimation — {TRANSPORT_VILLAGE.days} jours</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400">
+                <IconBus className="size-5" stroke={2} />
+              </div>
+              <div>
+                <div className="text-3xl font-bold tracking-tight tabular-nums">
+                  {fmt(TRANSPORT_VILLAGE.amount)}
+                </div>
+                <div className="text-muted-foreground mt-0.5 text-[0.6875rem]">
+                  budget estimé · {TRANSPORT_VILLAGE.days} jours · ≈{" "}
+                  {fmt(TRANSPORT_VILLAGE.amount / TRANSPORT_VILLAGE.days)}/jour
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <Card>
+          <CardHeader>
             <CardTitle>Récapitulatif général</CardTitle>
-            <CardDescription>Tout cumulé — dot + pré-dot</CardDescription>
+            <CardDescription>Tout cumulé — dot + pré-dot + transport</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
-                  Total général dépensé
+                  Total général
                 </div>
                 <div className="mt-0.5 text-3xl font-bold tracking-tight tabular-nums">
-                  {fmt(c.realSum + predot)}
+                  {fmt(c.realSum + predot + TRANSPORT_VILLAGE.amount)}
                 </div>
                 <div className="text-muted-foreground mt-1 text-[0.6875rem]">
-                  dont {fmt(c.realSum)} dot + {fmt(predot)} pré-dot
+                  {fmt(c.realSum + predot)} dépensé + {fmt(TRANSPORT_VILLAGE.amount)} transport (estimé)
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 <RecapStat label="Dépense dot (réel)" value={fmt(c.realSum)} />
                 <RecapStat label="Pré-dot" value={fmt(predot)} />
-                <RecapStat label="Total dépensé" value={fmt(c.realSum + predot)} highlight />
-                <RecapStat label="Budget dot (estimé)" value={fmt(c.totalEstime)} />
+                <RecapStat label="Transport (estimé)" value={fmt(TRANSPORT_VILLAGE.amount)} />
+                <RecapStat label="Total général" value={fmt(c.realSum + predot + TRANSPORT_VILLAGE.amount)} highlight />
               </div>
             </div>
           </CardContent>

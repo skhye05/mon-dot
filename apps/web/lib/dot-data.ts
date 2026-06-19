@@ -172,3 +172,6 @@ export const PREDOT_EXPENSES: PredotItem[] = [
 export function predotTotal(): number {
   return PREDOT_EXPENSES.reduce((s, i) => s + i.amount, 0)
 }
+
+/** Transport vers le village — estimation (FCFA) sur `days` jours. */
+export const TRANSPORT_VILLAGE = { amount: 280000, days: 3 }
